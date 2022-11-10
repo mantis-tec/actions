@@ -1,0 +1,56 @@
+name: bump-version
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: True
+        type: string
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3.1.0
+        with:
+          fetch-depth: 0
+
+      - name: Get current version
+        id: current_version
+        run: |
+          tag=$(git describe --abbrev=0)
+          echo "substring=${tag#v}" >> $GITHUB_OUTPUT
+
+      - name: Extract new version
+        id: new_version
+        uses: bhowell2/github-substring-action@v1.0.0
+        with:
+          value: ${{ inputs.version }}
+          index_of_str: v
+          fail_if_not_found: false
+          default_return_value: ${{ inputs.version }}
+          
+      - name: Find and replace the current version
+        id: find_replace
+        uses: jacobtomlinson/gha-find-replace@2.0.0
+        with:
+          find: "${{ steps.current_version.outputs.substring }}"
+          replace: "${{ steps.new_version.outputs.substring }}"
+          include: "{*/{CMakeLists.txt,package.xml,setup.py},docker-compose*.yml}"
+
+      - name: Update tag
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -a -m "build: bump version to ${{ steps.new_version.outputs.substring }} from ${{ steps.current_version.outputs.substring }}"
+          git tag -d ${{ github.ref_name }}
+          git tag -a ${{ github.ref_name }} -m "Version ${{ steps.new_version.outputs.substring }}"
+          
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.event.repository.default_branch }}
+          force: true
+          tags: true

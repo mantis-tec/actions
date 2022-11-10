@@ -1,0 +1,68 @@
+name: Test
+
+on:
+  workflow_call:
+    inputs:
+      colcon-defaults:
+        required: false
+        type: string
+        default: ""
+      package-name:
+        required: false
+        type: string
+        default: ""
+      ros-distro:
+        required: true
+        type: string
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3.1.0
+
+      - name: Check whether Python requirements file exists
+        id: check_python_requirements
+        uses: andstor/file-existence-action@v2.0.0
+        with:
+          files: requirements.txt
+
+      - name: Check whether vcs repos file exists
+        id: check_vcs_requirements
+        uses: andstor/file-existence-action@v2.0.0
+        with:
+          files: requirements.repos
+
+      - name: Set vcs repos file env variable
+        if: ${{ steps.check_vcs_requirements.outputs.files_exists }}
+        run: echo "VCS_REPO_FILE=requirements.repos" >> $GITHUB_ENV
+
+      - name: Setup ROS environment
+        uses: ros-tooling/setup-ros@0.4.1
+        with:
+          required-ros-distributions: ${{ inputs.ros-distro }}
+
+      - name: Setup SSH agent
+        if: ${{ env.SSH_PRIVATE_KEY }}
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        # Workaround checking whether the secret is empty.
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Install Python dependencies
+        if: ${{ steps.check_python_requirements.outputs.files_exists }}
+        run: python3 -m pip install -r requirements.txt
+
+      - name: Build and run tests
+        uses: ros-tooling/action-ros-ci@v0.2
+        with:
+          colcon-defaults: ${{ inputs.colcon-defaults }}
+          colcon-extra-args: --event-handlers console_direct+ --executor sequential
+          import-token: ${{ secrets.GITHUB_TOKEN }}
+          package-name: ${{ inputs.package-name }}
+          target-ros2-distro: ${{ inputs.ros-distro }}
+          vcs-repo-file-url: ${{ env.VCS_REPO_FILE }}
