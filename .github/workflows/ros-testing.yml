@@ -23,11 +23,11 @@ jobs:
       - name: Checkout the repo
         uses: actions/checkout@v3.1.0
 
-      - name: Check whether Python requirements file exists
+      - name: Check whether Python dev requirements file exists
         id: check_python_requirements
         uses: andstor/file-existence-action@v2.0.0
         with:
-          files: requirements.txt
+          files: requirements-dev.txt
 
       - name: Check whether vcs repos file exists
         id: check_vcs_requirements
@@ -53,9 +53,9 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Install Python dependencies
+      - name: Install Python dev dependencies
         if: ${{ steps.check_python_requirements.outputs.files_exists }}
-        run: python3 -m pip install -r requirements.txt
+        run: python3 -m pip install -r requirements-dev.txt
 
       - name: Build and run tests
         uses: ros-tooling/action-ros-ci@v0.2
