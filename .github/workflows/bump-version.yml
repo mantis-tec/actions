@@ -45,6 +45,7 @@ jobs:
           commit-message: "ci: bump version to ${{ steps.new_version.outputs.substring }} from ${{ steps.current_version.outputs.substring }}"
           branch: bump-version/${{ steps.new_version.outputs.substring }}
           delete-branch: true
+          base: ${{ github.event.repository.default_branch }}
           title: "ci: bump version to ${{ steps.new_version.outputs.substring }} from ${{ steps.current_version.outputs.substring }}"
           assignees: kevinanschau
           reviewers: kevinanschau
