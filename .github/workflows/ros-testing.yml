@@ -58,7 +58,7 @@ jobs:
         run: python3 -m pip install -r requirements-dev.txt
 
       - name: Build and run tests
-        uses: ros-tooling/action-ros-ci@v0.2.6
+        uses: ros-tooling/action-ros-ci@0.2.6
         with:
           colcon-defaults: ${{ inputs.colcon-defaults }}
           colcon-extra-args: --event-handlers console_direct+ --executor sequential
