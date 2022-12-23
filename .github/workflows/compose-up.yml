@@ -45,4 +45,6 @@ jobs:
           NAMESPACES: stand1,stand2,stand3,stand4
           LOG_LEVEL: debug
           IMAGE_TAG: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
-        run: docker compose up -d
+        run: |
+          docker compose pull
+          docker compose up -d
